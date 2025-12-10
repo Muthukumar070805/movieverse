@@ -5,6 +5,7 @@ import { useDebounce } from "react-use";
 import { Search, Spinner, Moviecard } from "./components";
 import { updateSearchCount } from "./appwrite";
 import { Carousel } from "./components";
+import { TrendCard } from "./components";
 
 const API_KEY = import.meta.env.VITE_TMDB_KEY;
 const API_URL = "https://api.themoviedb.org/3";
@@ -33,6 +34,16 @@ function App() {
 
   const [ isSearchSticky, setIsSearchSticky] = useState(false);
 
+  const [ watchList, setWatchList] = useState(() => {
+    try {
+      const saved = localStorage.getItem('watchlist');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  }); 
+  
+  console.log(watchList);
   useDebounce(() => setDebouncedSearchTearm(searchTerm), 500, [searchTerm]);
 
   const headerRef = useRef(null);
@@ -41,7 +52,7 @@ function App() {
     setIsLoading(true);
     try {
       const params = new URLSearchParams({
-        ...(query && { query: query }), // Only include query if it exists
+        ...(query && { query: query }),
         page: page,
       });
 
@@ -55,7 +66,7 @@ function App() {
       }
 
       const data = response.data;
-      console.log(data.results)
+      // console.log(data.results[0])
 
       if (!data.results || data.results.length === 0) {
         setErrorMessage("No movies found");
@@ -102,7 +113,8 @@ function App() {
   const onPageHandle = (newPage) => {
     fetchMovies(searchTerm, newPage);
   };
-
+  
+ 
   // useEffect
 
   useEffect(() => {
@@ -116,10 +128,14 @@ function App() {
   }, []);
 
   useEffect(()=>{
+    localStorage.setItem('watchlist', JSON.stringify(watchList));
+  },[watchList])
+
+  useEffect(()=>{
     const handleScroll = ()=>{
       if(headerRef.current){
         const headerBottom = headerRef.current.getBoundingClientRect().bottom;
-        const scrollThreshold = headerBottom+ 500;
+        const scrollThreshold = headerBottom+ 750;
 
         setIsSearchSticky(window.scrollY > scrollThreshold)
       }
@@ -140,7 +156,7 @@ function App() {
 
       <div className="wrapper">
         <header ref={headerRef}>
-          <img src="./hero.png" alt="" />
+          <TrendCard trendingMovies={trendingMovies}/>
           <h1>
             Find <span className="text-gradient"> Movies</span> You'll Enjoy
             Without the Hassle
@@ -181,7 +197,12 @@ function App() {
           ) : (
             <ul>
               {movieList.map((movie) => (
-                <Moviecard key={movie.id} movie={movie} />
+                <Moviecard 
+                  key={movie.id} 
+                  movie={movie} 
+                  watchList={watchList}
+                  setWatchList={setWatchList} 
+                />
               ))}
             </ul>
           )}

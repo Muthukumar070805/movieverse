@@ -18,7 +18,7 @@
 
   --background-image-hero-pattern: url("/hero-bg.png");
   
-  --hover-delay: 1s;
+  --hover-delay: .7s;
 }
 
 @layer base {
@@ -95,7 +95,7 @@
   }
 
  .sticky-search-container {
-  @apply fixed top-0 left-0 right-0 z-50 py-2 px-4 shadow-lg transition-all duration-300;
+  @apply fixed top-0 left-0 right-0 z-50 py-2 px-4 transition-all duration-300;
 }
 
 .sticky-search {
@@ -142,7 +142,7 @@
   }
 
   .poster-img {
-    @apply w-full object-cover rounded-t-2xl;
+    @apply w-full object-cover rounded-2xl;
     height: 280px;
     transition: height 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0s;
   }
@@ -252,10 +252,10 @@
 }
 
 .carousel{
-  @apply flex items-center m-4 p-4 mt-15 justify-evenly text-white;
+  @apply flex items-center m-4 p-4 mt-16 justify-evenly text-white;
 
   & button{
-    @apply via-black/70 hover:scale-115;
+    @apply via-black/70 hover:scale-105;
   }
 }
 

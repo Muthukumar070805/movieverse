@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 
 const Moviecard = ({
   movie: {
+    id,
     title,
     poster_path,
     vote_average,
@@ -9,24 +10,41 @@ const Moviecard = ({
     release_date,
     overview,
   },
+  watchList,
+  setWatchList,
 }) => {
-  const [ isActive, setIsActive] = useState(false);
+  const [isActive, setIsActive] = useState(watchList.includes(id));
+  useEffect(() => {
+    setIsActive(watchList.includes(id));
+  }, [watchList, id]);
+
+  const handleBookmarkClick = () => {
+    setIsActive(!isActive);
+
+    if (!isActive) {
+  
+      setWatchList((prev) => {
+        if (prev.includes(id)) return prev;
+        return [...prev, id];
+      });
+    } else {
+      setWatchList((prev) => prev.filter((movieId) => movieId !== id));
+    }
+  };
 
   if (!poster_path) {
     return null;
   }
-  
-  const btn_bookmark = `btn-bookmark ${
-    isActive 
-      ? 'bg-light-100/20 border-light-100/40' 
-      : 'bg-gray-700 border-light-100/20'
-  }`;
 
+  const btn_bookmark = `btn-bookmark ${
+    isActive
+      ? "bg-light-100/20 border-light-100/40"
+      : "bg-gray-700 border-light-100/20"
+  }`;
 
   return (
     <div className="card-container">
       <div className="movie-card">
-        {/* Movie Poster - Always Visible */}
         <img
           className="poster-img"
           src={
@@ -37,12 +55,15 @@ const Moviecard = ({
           alt={title}
         />
 
-        {/* Default View - Movie Info (Always Visible) */}
         <div className="movie-info">
           <div className="info-header">
             <h3>{title}</h3>
-            {/* Bookmark Icon - Shows on Hover */}
-            <button className={btn_bookmark} aria-label="Add to Watchlist" onClick={()=>setIsActive(!isActive)}>
+
+            <button
+              className={btn_bookmark}
+              aria-label="Add to Watchlist"
+              onClick={()=>handleBookmarkClick()}
+            >
               <svg
                 width="20"
                 height="20"
@@ -72,7 +93,7 @@ const Moviecard = ({
           </div>
         </div>
 
-        {/* Hover Expansion - Overview */}
+        
         <div className="card-details">
           <div className="description">
             <h4>Overview</h4>
