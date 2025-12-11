@@ -2,6 +2,8 @@
 
 A MERN stack web application for discovering and tracking movies using TMDB API.
 
+Live Demo: https://movieverse-8hkn8g18x-muthukumar070805s-projects.vercel.app/
+
 ## Features
 - 🔍 Search movies with advanced filters
 - ⭐ Rate and review films
