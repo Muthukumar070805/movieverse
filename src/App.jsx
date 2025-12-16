@@ -2,10 +2,15 @@ import React, { useRef } from "react";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { useDebounce } from "react-use";
-import { Search, Spinner, Moviecard } from "./components";
+import {
+  Search,
+  Spinner,
+  Moviecard,
+  Carousel,
+  TrendCard,
+  GenreFilter,
+} from "./components";
 import { updateSearchCount } from "./appwrite";
-import { Carousel } from "./components";
-import { TrendCard } from "./components";
 
 const API_KEY = import.meta.env.VITE_TMDB_KEY;
 const API_URL = "https://api.themoviedb.org/3";
@@ -32,33 +37,84 @@ function App() {
 
   const [pageNumber, setPageNumber] = useState(1);
 
-  const [ isSearchSticky, setIsSearchSticky] = useState(false);
+  const [isSearchSticky, setIsSearchSticky] = useState(false);
 
-  const [ watchList, setWatchList] = useState(() => {
+  const [genreList, setGenreList] = useState([]);
+
+  const [selectedGenres, setSelectedGenres] = useState("");
+
+  const [watchList, setWatchList] = useState(() => {
     try {
-      const saved = localStorage.getItem('watchlist');
+      const saved = localStorage.getItem("watchlist");
       return saved ? JSON.parse(saved) : [];
     } catch {
       return [];
     }
-  }); 
-  
-  console.log(watchList);
+  });
+
   useDebounce(() => setDebouncedSearchTearm(searchTerm), 500, [searchTerm]);
 
   const headerRef = useRef(null);
 
-  const fetchMovies = async (query = searchTerm || "" , page = 1) => {
+  const fetchGenres = async () => {
+    try {
+      const response = await axios.get(
+        `${API_URL}/genre/movie/list`,
+        API_OPTIONS,
+      );
+      if (response.status !== 200) {
+        throw new Error(`Failed to fetch genres: ${response.status}`);
+      }
+      setGenreList(response.data.genres);
+      // console.log(response.data.genres);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const genreMovies = async (genre) => {
+    try {
+      const response = await axios.get(
+        `${API_URL}/discover/movie?sort_by=popularity.desc&with_genres=${genre}`,
+        API_OPTIONS,
+      );
+      if (response.status !== 200) {
+        throw new Error(`Failed to fetch movies: ${response.status}`);
+      }
+      const data = response.data;
+
+      if (!data.results || data.results.length === 0) {
+        setErrorMessage("No movies found");
+        setMovieList([]);
+        return;
+      }
+
+      setMovieList(data.results || []);
+    } catch (err) {
+      console.error(`Error Fetching movies: ${err}`);
+      setErrorMessage(`Error Fetching Movies Please Try again Later...`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchMovies = async (
+    query = searchTerm || "",
+    page = 1,
+    genre = selectedGenres || "",
+  ) => {
     setIsLoading(true);
     try {
+      let endpoint;
       const params = new URLSearchParams({
         ...(query && { query: query }),
+        ...(genre && { with_genres: genre }),
         page: page,
       });
-
-      const endpoint = query
+      endpoint = query
         ? `${API_URL}/search/movie?${params.toString()}`
-        : `${API_URL}/discover/movie?sort_by=popularity.desc&page=${page}`;
+        : `${API_URL}/discover/movie?sort_by=popularity.desc&with_genres=${genre}&page=${page}`;
+
       const response = await axios.get(endpoint, API_OPTIONS);
 
       if (response.status !== 200) {
@@ -86,7 +142,6 @@ function App() {
     }
   };
 
-
   const loadTrendingMovies = async () => {
     try {
       const endpoint = `${API_URL}/movie/popular`;
@@ -113,42 +168,45 @@ function App() {
   const onPageHandle = (newPage) => {
     fetchMovies(searchTerm, newPage);
   };
-  
- 
+
   // useEffect
 
   useEffect(() => {
     fetchMovies(debouncedSearchTearm);
-    console.log(searchTerm);
     setPageNumber(1);
   }, [debouncedSearchTearm]);
 
   useEffect(() => {
+    genreMovies(selectedGenres);
+  }, [selectedGenres]);
+
+  useEffect(() => {
     loadTrendingMovies();
+    fetchGenres();
   }, []);
 
-  useEffect(()=>{
-    localStorage.setItem('watchlist', JSON.stringify(watchList));
-  },[watchList])
+  useEffect(() => {
+    localStorage.setItem("watchlist", JSON.stringify(watchList));
+  }, [watchList]);
 
-  useEffect(()=>{
-    const handleScroll = ()=>{
-      if(headerRef.current){
+  useEffect(() => {
+    const handleScroll = () => {
+      if (headerRef.current) {
         const headerBottom = headerRef.current.getBoundingClientRect().bottom;
-        const scrollThreshold = headerBottom+ 750;
+        const scrollThreshold = headerBottom + 750;
 
-        setIsSearchSticky(window.scrollY > scrollThreshold)
+        setIsSearchSticky(window.scrollY > scrollThreshold);
       }
-    }
+    };
 
-    window.addEventListener('scroll',handleScroll);
+    window.addEventListener("scroll", handleScroll);
 
     handleScroll();
 
-    return()=>{
-      window.removeEventListener('scroll',handleScroll);
-    }
-  },[])
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
 
   return (
     <main>
@@ -156,12 +214,18 @@ function App() {
 
       <div className="wrapper">
         <header ref={headerRef}>
-          <TrendCard trendingMovies={trendingMovies}/>
+          <TrendCard trendingMovies={trendingMovies} />
           <h1>
             Find <span className="text-gradient"> Movies</span> You'll Enjoy
             Without the Hassle
           </h1>
-          <Search searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+          <div className="flex items-center justify-center gap-2 mt-10">
+            <Search searchTerm={searchTerm} setSearchTerm={setSearchTerm} />{" "}
+            <GenreFilter
+              genreList={genreList}
+              setSelectedGenres={setSelectedGenres}
+            />
+          </div>
         </header>
 
         {isSearchSticky && !isLoading && (
@@ -193,29 +257,31 @@ function App() {
           {isLoading ? (
             <Spinner />
           ) : errorMessage ? (
-            <p className="text-red-500">{errorMessage}</p>
+            <p className="text-red-500" onClick={() => fetchMovies("")}>
+              {errorMessage}
+            </p>
           ) : (
             <ul>
               {movieList.map((movie) => (
-                <Moviecard 
-                  key={movie.id} 
-                  movie={movie} 
+                <Moviecard
+                  key={movie.id}
+                  movie={movie}
                   watchList={watchList}
-                  setWatchList={setWatchList} 
+                  setWatchList={setWatchList}
                 />
               ))}
             </ul>
           )}
         </section>
-           
-          { !isLoading ? ( <Carousel
-          pageNumber={pageNumber}
-          setPageNumber={setPageNumber}
-          onPageHandle={onPageHandle}
-          isLoading={isLoading}
-        />) : null }
-        
 
+        {!isLoading ? (
+          <Carousel
+            pageNumber={pageNumber}
+            setPageNumber={setPageNumber}
+            onPageHandle={onPageHandle}
+            isLoading={isLoading}
+          />
+        ) : null}
       </div>
     </main>
   );

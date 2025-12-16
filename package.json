@@ -10,24 +10,29 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@heroui/react": "^3.0.0-beta.2",
+    "@heroui/styles": "^3.0.0-beta.2",
     "@tailwindcss/vite": "^4.1.17",
+    "@tailwindplus/elements": "^1.0.20",
     "appwrite": "^21.4.0",
     "axios": "^1.13.2",
     "dotenv": "^17.2.3",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "react-use": "^17.6.0",
-    "tailwindcss": "^4.1.17"
+    "react-use": "^17.6.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
     "@vitejs/plugin-react": "^5.1.0",
+    "autoprefixer": "^10.4.23",
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
     "globals": "^16.5.0",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.18",
     "vite": "^7.2.2"
   }
 }
