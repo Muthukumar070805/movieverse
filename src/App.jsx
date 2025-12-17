@@ -72,31 +72,34 @@ function App() {
     }
   };
 
-  const genreMovies = async (genre) => {
-    try {
-      const response = await axios.get(
-        `${API_URL}/discover/movie?sort_by=popularity.desc&with_genres=${genre}`,
-        API_OPTIONS,
-      );
-      if (response.status !== 200) {
-        throw new Error(`Failed to fetch movies: ${response.status}`);
-      }
-      const data = response.data;
+  // const genreMovies = async (genre,page=1, query = searchTerm || "") => {
+  //   try {
+  //     const endpoint = query
+  //       ? `${API_URL}/search/movie?${params.toString()}`
+  //       : `${API_URL}/discover/movie?sort_by=popularity.desc&with_genres=${genre}&page=${page}`;
+  //     const response = await axios.get(
+  //       `${API_URL}/discover/movie?sort_by=popularity.desc&with_genres=${genre}`,
+  //       API_OPTIONS,
+  //     );
+  //     if (response.status !== 200) {
+  //       throw new Error(`Failed to fetch movies: ${response.status}`);
+  //     }
+  //     const data = response.data;
 
-      if (!data.results || data.results.length === 0) {
-        setErrorMessage("No movies found");
-        setMovieList([]);
-        return;
-      }
+  //     if (!data.results || data.results.length === 0) {
+  //       setErrorMessage("No movies found");
+  //       setMovieList([]);
+  //       return;
+  //     }
 
-      setMovieList(data.results || []);
-    } catch (err) {
-      console.error(`Error Fetching movies: ${err}`);
-      setErrorMessage(`Error Fetching Movies Please Try again Later...`);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  //     setMovieList(data.results || []);
+  //   } catch (err) {
+  //     console.error(`Error Fetching movies: ${err}`);
+  //     setErrorMessage(`Error Fetching Movies Please Try again Later...`);
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
 
   const fetchMovies = async (
     query = searchTerm || "",
@@ -104,17 +107,25 @@ function App() {
     genre = selectedGenres || "",
   ) => {
     setIsLoading(true);
+    setErrorMessage("");
+    let endpoint;
     try {
-      let endpoint;
       const params = new URLSearchParams({
         ...(query && { query: query }),
         ...(genre && { with_genres: genre }),
         page: page,
       });
-      endpoint = query
-        ? `${API_URL}/search/movie?${params.toString()}`
-        : `${API_URL}/discover/movie?sort_by=popularity.desc&with_genres=${genre}&page=${page}`;
 
+      if (query && genre) {
+        endpoint = `${API_URL}/search/movie?${params.toString()}`;
+      } else if (query) {
+        endpoint = `${API_URL}/search/movie?${params.toString()}`;
+      } else if (genre && !query) {
+        endpoint = `${API_URL}/discover/movie?sort_by=popularity.desc&with_genres=${genre}&page=${page}`;
+      } else {
+        endpoint = `${API_URL}/discover/movie?sort_by=popularity.desc&page=${page}`;
+      }
+      console.log(endpoint);
       const response = await axios.get(endpoint, API_OPTIONS);
 
       if (response.status !== 200) {
@@ -172,12 +183,12 @@ function App() {
   // useEffect
 
   useEffect(() => {
-    fetchMovies(debouncedSearchTearm);
     setPageNumber(1);
+    fetchMovies(debouncedSearchTearm, 1, selectedGenres);
   }, [debouncedSearchTearm]);
 
   useEffect(() => {
-    genreMovies(selectedGenres);
+    fetchMovies(searchTerm, 1, selectedGenres);
   }, [selectedGenres]);
 
   useEffect(() => {
