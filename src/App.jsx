@@ -9,6 +9,8 @@ import {
   Carousel,
   TrendCard,
   GenreFilter,
+  Bookmark,
+  WatchListCard,
 } from "./components";
 import { updateSearchCount } from "./appwrite";
 
@@ -43,9 +45,13 @@ function App() {
 
   const [selectedGenres, setSelectedGenres] = useState("");
 
-  const [watchList, setWatchList] = useState(() => {
+  const [isBookmarked, setIsBookmarked] = useState(false);
+
+  const [watchList, setWatchList] = useState([]);
+
+  const [watchListId, setWatchListId] = useState(() => {
     try {
-      const saved = localStorage.getItem("watchlist");
+      const saved = localStorage.getItem("watchListId");
       return saved ? JSON.parse(saved) : [];
     } catch {
       return [];
@@ -66,39 +72,59 @@ function App() {
         throw new Error(`Failed to fetch genres: ${response.status}`);
       }
       setGenreList(response.data.genres);
-      // console.log(response.data.genres);
+      // console.log(response.data.genres);`
     } catch (error) {
       console.error(error);
     }
   };
 
-  // const genreMovies = async (genre,page=1, query = searchTerm || "") => {
-  //   try {
-  //     const endpoint = query
-  //       ? `${API_URL}/search/movie?${params.toString()}`
-  //       : `${API_URL}/discover/movie?sort_by=popularity.desc&with_genres=${genre}&page=${page}`;
-  //     const response = await axios.get(
-  //       `${API_URL}/discover/movie?sort_by=popularity.desc&with_genres=${genre}`,
-  //       API_OPTIONS,
-  //     );
-  //     if (response.status !== 200) {
-  //       throw new Error(`Failed to fetch movies: ${response.status}`);
-  //     }
-  //     const data = response.data;
+  const fetchMoviesByIds = async () => {
+    setIsLoading(true);
+    setErrorMessage("");
+    watchListId.forEach(async (id) => {
+      try {
+        const response = await axios.get(`${API_URL}/movie/${id}`, API_OPTIONS);
+        if (response.status !== 200) {
+          throw new Error(`Failed to fetch movie details: ${response.status}`);
+        }
 
-  //     if (!data.results || data.results.length === 0) {
-  //       setErrorMessage("No movies found");
-  //       setMovieList([]);
-  //       return;
-  //     }
+        // Check if the movie is already in the watchList
+        if (!watchList.some((movie) => movie.id === id)) {
+          setWatchList((prevWatchList) => [...prevWatchList, response.data]);
+          console.log(watchList);
+        }
+      } catch (err) {
+        console.error(`Error Fetching movies: ${err}`);
+        setErrorMessage(`Error Fetching Movies Please Try again Later...`);
+      } finally {
+        setIsLoading(false);
+      }
+    });
+  };
 
-  //     setMovieList(data.results || []);
-  //   } catch (err) {
-  //     console.error(`Error Fetching movies: ${err}`);
-  //     setErrorMessage(`Error Fetching Movies Please Try again Later...`);
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
+  // const fetchMoviesByIds = async () => {
+  //   setIsLoading(true);
+  //   setErrorMessage("");
+  //     const uniqueMovieIds = new Set();
+  //   watchListId.forEach(async (id) => {
+  //     try {
+  //       const response = await axios.get(`${API_URL}/movie/${id}`, API_OPTIONS);
+  //       if (response.status !== 200) {
+  //         throw new Error(`Failed to fetch movie details: ${response.status}`);
+  //       }
+
+  //       // console.log(response.data);
+  //       const data = response.data;
+
+  //       setWatchList((prevWatchList) => [...prevWatchList, data]);
+  //       console.log(watchList);
+  //     } catch (err) {
+  //       console.error(`Error Fetching movies: ${err}`);
+  //       setErrorMessage(`Error Fetching Movies Please Try again Later...`);
+  //     } finally {
+  //       setIsLoading(false);
+  //     }
+  //   });
   // };
 
   const fetchMovies = async (
@@ -125,7 +151,7 @@ function App() {
       } else {
         endpoint = `${API_URL}/discover/movie?sort_by=popularity.desc&page=${page}`;
       }
-      console.log(endpoint);
+      // console.log(endpoint);
       const response = await axios.get(endpoint, API_OPTIONS);
 
       if (response.status !== 200) {
@@ -133,7 +159,7 @@ function App() {
       }
 
       const data = response.data;
-      // console.log(data.results[0])
+      // console.log(data.results);
 
       if (!data.results || data.results.length === 0) {
         setErrorMessage("No movies found");
@@ -197,8 +223,17 @@ function App() {
   }, []);
 
   useEffect(() => {
-    localStorage.setItem("watchlist", JSON.stringify(watchList));
-  }, [watchList]);
+    localStorage.setItem("watchListId", JSON.stringify(watchListId));
+    // fetchMoviesByIds();
+  }, [watchListId]);
+
+  useEffect(() => {
+    if (isBookmarked) {
+      fetchMoviesByIds();
+    } else if (!isBookmarked) {
+      fetchMovies(debouncedSearchTearm, pageNumber, selectedGenres);
+    }
+  }, [isBookmarked]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -230,11 +265,18 @@ function App() {
             Find <span className="text-gradient"> Movies</span> You'll Enjoy
             Without the Hassle
           </h1>
-          <div className="flex items-center justify-center gap-2 mt-10">
-            <Search searchTerm={searchTerm} setSearchTerm={setSearchTerm} />{" "}
+
+          <div className="flex items-center justify-center gap-6 mt-10">
+            <Search searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
             <GenreFilter
               genreList={genreList}
               setSelectedGenres={setSelectedGenres}
+            />
+
+            <Bookmark
+              isBookmarked={isBookmarked}
+              setIsBookmarked={setIsBookmarked}
+              watchListId={watchListId}
             />
           </div>
         </header>
@@ -265,18 +307,38 @@ function App() {
 
         <section className="all-movies">
           <h2>All Movies</h2>
+
           {isLoading ? (
             <Spinner />
           ) : errorMessage ? (
             <p className="text-red-500" onClick={() => fetchMovies("")}>
               {errorMessage}
             </p>
+          ) : isBookmarked ? (
+            <ul>
+              {watchList.map((movie) => (
+                <WatchListCard
+                  key={movie.id}
+                  movie={movie}
+                  watchListId={watchListId}
+                  setWatchListId={setWatchListId}
+                  isBookmarked={isBookmarked}
+                  setIsBookmarked={setIsBookmarked}
+                  watchList={watchList}
+                  setWatchList={setWatchList}
+                />
+              ))}
+            </ul>
           ) : (
             <ul>
               {movieList.map((movie) => (
                 <Moviecard
                   key={movie.id}
                   movie={movie}
+                  watchListId={watchListId}
+                  setWatchListId={setWatchListId}
+                  isBookmarked={isBookmarked}
+                  setIsBookmarked={setIsBookmarked}
                   watchList={watchList}
                   setWatchList={setWatchList}
                 />

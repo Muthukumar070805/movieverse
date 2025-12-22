@@ -24,7 +24,7 @@ const TrendCard = ({ trendingMovies }) => {
 
           return (
             <div
-              key={card.$id}
+              key={index}
               className="absolute transition-all duration-500 hover:scale-105 cursor-pointer"
               style={{
                 transform: `translateX(${translateX[index]}px) rotate(${rotations[index]}deg)`,

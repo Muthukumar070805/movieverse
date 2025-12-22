@@ -8,7 +8,7 @@ const GenreFilter = ({ genreList, setSelectedGenres }) => {
 
   return (
     <el-dropdown className="inline-block">
-      <button className="inline-flex w-full justify-center gap-x-1.5 rounded-lg bg-light-100/5 px-4 py-3 text-sm font-semibold text-white inset-ring-1 inset-ring-white/5 hover:bg-white/20">
+      <button className="inline-flex w-full justify-center gap-x-1.5 rounded-4xl bg-light-100/5 px-4 py-5 text-sm font-semibold text-white inset-ring-1 inset-ring-white/5 hover:bg-white/20">
         Genre
         <svg
           viewBox="0 0 20 20"
@@ -28,7 +28,7 @@ const GenreFilter = ({ genreList, setSelectedGenres }) => {
       <el-menu
         anchor="bottom end"
         popover="auto"
-        className="w-30 origin-top-right rounded-md bg-gray-900/50 outline-1 -outline-offset-1 outline-white/10 transition transition-discrete [--anchor-gap:--spacing(2)] data-closed:scale-95 data-closed:transform data-closed:opacity-0 data-enter:duration-100 data-enter:ease-out data-leave:duration-75 data-leave:ease-in"
+        className="w-30 origin-top-right rounded-2xl bg-gray-900/50 outline-1 -outline-offset-1 outline-white/10 transition transition-discrete [--anchor-gap:--spacing(2)] data-closed:scale-95 data-closed:transform data-closed:opacity-0 data-enter:duration-100 data-enter:ease-out data-leave:duration-75 data-leave:ease-in"
       >
         <div className="py-1">
           <a

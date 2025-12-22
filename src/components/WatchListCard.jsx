@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import starIcon from "../assets/star.svg";
 
-const Moviecard = ({
+const WatchListCard = ({
   movie: {
     id,
     title,
@@ -23,7 +23,6 @@ const Moviecard = ({
 
   const handleBookmarkClick = () => {
     setIsActive(!isActive);
-
     if (!isActive) {
       setWatchListId((prev) => {
         if (Array.isArray(prev) && prev.includes(id)) return prev;
@@ -114,4 +113,4 @@ const Moviecard = ({
   );
 };
 
-export default Moviecard;
+export default WatchListCard;
